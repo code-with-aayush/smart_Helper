@@ -43,16 +43,16 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 bg-slate-50 py-12">
-            <div className="bg-white w-full max-w-lg p-8 rounded-2xl shadow-xl border border-slate-100 animate-fade-in">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
+            <div className="card w-full max-w-lg p-8 bg-white shadow-lg animate-in">
 
                 <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-slate-900 font-heading">Create Account</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">Create Account</h1>
                     <p className="text-slate-500 mt-1">Join the professional network</p>
                 </div>
 
                 {error && (
-                    <div className="mb-6 p-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium border border-red-100 text-center">
+                    <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 text-sm border border-red-100 text-center">
                         {error}
                     </div>
                 )}
@@ -60,36 +60,36 @@ export default function RegisterPage() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="input-field"
+                                className="input-base"
                                 placeholder="John Doe"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="input-field"
+                                className="input-base"
                                 placeholder="name@company.com"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="input-field"
+                                className="input-base"
                                 placeholder="Min 6 characters"
                                 required
                                 minLength={6}
@@ -99,7 +99,7 @@ export default function RegisterPage() {
 
                     {/* Role Selection */}
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">I want to</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">I want to</label>
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 type="button"
@@ -129,8 +129,8 @@ export default function RegisterPage() {
 
                     {/* Skills (Helper only) */}
                     {role === 'helper' && (
-                        <div className="animate-fade-in pt-2">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Select Skills</label>
+                        <div className="animate-in pt-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Select Skills</label>
                             <div className="flex flex-wrap gap-2">
                                 {AVAILABLE_SKILLS.map(skill => (
                                     <button
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="btn btn-primary w-full shadow-lg shadow-blue-500/20 mt-2"
+                        className="btn btn-primary w-full py-3 text-base shadow-lg shadow-blue-500/20 mt-2"
                     >
                         {loading ? 'Creating Account...' : 'Get Started'}
                     </button>
@@ -161,7 +161,7 @@ export default function RegisterPage() {
                 <div className="mt-8 text-center pt-6 border-t border-slate-100">
                     <p className="text-sm text-slate-500">
                         Already have an account?{' '}
-                        <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+                        <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700 hover:underline">
                             Sign In
                         </Link>
                     </p>

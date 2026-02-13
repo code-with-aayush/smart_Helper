@@ -4,24 +4,19 @@
 @theme {
   --color-primary: #2563EB;
   /* Royal Blue */
-  --color-primary-dark: #1D4ED8;
+  --color-primary-dark: #1E40AF;
   --color-primary-light: #60A5FA;
 
   --color-secondary: #0F172A;
-  /* Slate 900 (Dark for Contrast) */
-  --color-accent: #F59E0B;
-  /* Amber (Stars/Alerts) */
-
-  --color-success: #10B981;
-  --color-danger: #EF4444;
+  /* Slate 900 */
 
   --color-background: #F8FAFC;
-  /* Slate 50 - Light Background */
+  /* Slate 50 */
   --color-surface: #FFFFFF;
-  /* White - Cards/Modals */
+  /* White */
 
-  --color-text-main: #0F172A;
-  /* Slate 900 */
+  --color-text-main: #1E293B;
+  /* Slate 800 */
   --color-text-secondary: #64748B;
   /* Slate 500 */
 
@@ -31,24 +26,21 @@
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-heading: 'Outfit', sans-serif;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.05);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
+/* Global Reset & Base Styles */
+:root {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-text-main);
-  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
@@ -58,17 +50,25 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading);
+  color: var(--color-secondary);
 }
 
-/* Base Components */
+/* Utility Components */
+.container-max {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.75rem 1.5rem;
-  border-radius: 9999px;
-  /* Pill shape */
-  font-weight: 600;
+  border-radius: 0.5rem;
+  /* Standard rounded, not pill */
+  font-weight: 500;
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -80,36 +80,44 @@ h6 {
 
 .btn-primary:hover {
   background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
 }
 
-.btn-secondary {
-  background-color: white;
-  color: var(--color-text-main);
+.btn-outline {
+  background-color: transparent;
   border: 1px solid var(--color-border);
+  color: var(--color-text-main);
 }
 
-.btn-secondary:hover {
-  background-color: #F1F5F9;
+.btn-outline:hover {
+  border-color: var(--color-text-secondary);
+  background-color: white;
 }
 
+/* Cards */
 .card {
   background-color: var(--color-surface);
-  border-radius: 1rem;
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s;
 }
 
-.input-field {
+.card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+/* Form Elements */
+.input-base {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
   background-color: white;
-  color: var(--color-text-main);
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.input-field:focus {
+.input-base:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -128,6 +136,6 @@ h6 {
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+.animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
 }

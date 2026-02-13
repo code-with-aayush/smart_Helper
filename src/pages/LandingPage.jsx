@@ -5,156 +5,112 @@ export default function LandingPage() {
     const { currentUser } = useAuth();
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="flex flex-col min-h-screen bg-slate-50">
+
             {/* Hero Section */}
-            <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <section className="bg-white border-b border-slate-100 pt-32 pb-24">
+                <div className="container-max grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-                    {/* Text Content */}
-                    <div className="space-y-8 animate-fade-in">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider">
-                            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                            Trusted by 50,000+ Homeowners
-                        </div>
-
-                        <h1 className="text-5xl sm:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                            Get Professional Help in <span className="text-blue-600">15 Minutes</span>
+                    <div className="space-y-6 animate-in">
+                        <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold tracking-wide">
+                            New: AI-Powered Matches
+                        </span>
+                        <h1 className="text-5xl font-bold text-slate-900 leading-tight">
+                            Professional Helpers, <br />
+                            <span className="text-blue-600">On Demand.</span>
                         </h1>
-
-                        <p className="text-lg text-slate-600 max-w-xl leading-relaxed">
-                            Don't wait days for quotes. Our smart auto-dispatch system connects you with verified pros in your area instantly. Quick, reliable, and guaranteed.
+                        <p className="text-lg text-slate-600 leading-relaxed max-w-lg">
+                            The smartest way to book local professionals. from cleaning to repairs, get matched with verified experts in your area instantly.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex gap-4 pt-4">
                             {currentUser ? (
-                                <Link to="/dashboard" className="btn btn-primary text-lg px-8 py-4 shadow-xl shadow-blue-500/20">
+                                <Link to="/dashboard" className="btn btn-primary text-lg px-8">
                                     Go to Dashboard
                                 </Link>
                             ) : (
-                                <Link to="/register" className="btn btn-primary text-lg px-8 py-4 shadow-xl shadow-blue-500/20">
-                                    Find a Helper
-                                </Link>
+                                <>
+                                    <Link to="/register" className="btn btn-primary text-lg px-8">
+                                        Get Started
+                                    </Link>
+                                    <Link to="/login" className="btn btn-outline text-lg px-8">
+                                        Sign In
+                                    </Link>
+                                </>
                             )}
-                            <Link to="/helper" className="btn btn-secondary text-lg px-8 py-4">
-                                Become a Pro
-                            </Link>
-                        </div>
-
-                        <div className="flex items-center gap-6 text-sm font-medium text-slate-500 pt-4">
-                            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> Instant Booking</span>
-                            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> Verified Pros</span>
-                            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> Flat Pricing</span>
                         </div>
                     </div>
 
-                    {/* Hero Image / Graphic */}
-                    <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                        <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 shadow-2xl overflow-hidden aspect-square flex items-center justify-center">
-                            {/* Abstract UI Representation */}
-                            <div className="text-center relative z-10">
-                                <div className="w-24 h-24 mx-auto bg-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/40">
-                                    <span className="text-5xl animate-bounce">⚡</span>
-                                </div>
-                                <h3 className="text-3xl font-bold text-white mb-2 font-heading">SERVICE</h3>
-                                <div className="h-1 w-20 bg-blue-500 mx-auto rounded-full mt-4"></div>
-                            </div>
-
-                            {/* Floating Elements mimicking the reference */}
-                            <div className="absolute bottom-8 left-8 right-8 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 flex items-center gap-4">
-                                <div className="flex -space-x-3">
-                                    <div className="w-10 h-10 rounded-full bg-slate-300 border-2 border-slate-800"></div>
-                                    <div className="w-10 h-10 rounded-full bg-slate-400 border-2 border-slate-800"></div>
-                                    <div className="w-10 h-10 rounded-full bg-slate-500 border-2 border-slate-800"></div>
-                                </div>
-                                <div>
-                                    <p className="text-white font-bold text-sm">42 Pro Helpers</p>
-                                    <p className="text-slate-400 text-xs">Available now in your area</p>
+                    <div className="relative h-[400px] bg-slate-100 rounded-2xl overflow-hidden shadow-xl border border-slate-200 animate-in" style={{ animationDelay: '0.1s' }}>
+                        {/* Abstract UI Representation */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-tr from-slate-50 to-white">
+                            <div className="text-center">
+                                <div className="text-6xl mb-4">⚡</div>
+                                <h3 className="text-2xl font-bold text-slate-800">Smart Assignment</h3>
+                                <div className="mt-4 flex flex-col gap-2 opacity-50">
+                                    <div className="h-2 w-32 bg-slate-300 rounded-full mx-auto"></div>
+                                    <div className="h-2 w-24 bg-slate-300 rounded-full mx-auto"></div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Decorative Blobs */}
-                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl -z-10"></div>
-                        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-100 rounded-full blur-3xl -z-10"></div>
+                        {/* Floating Cards */}
+                        <div className="absolute top-10 right-10 bg-white p-4 rounded-xl shadow-lg border border-slate-100 animate-bounce" style={{ animationDuration: '3s' }}>
+                            <span className="text-green-500 font-bold">✓ Match Found</span>
+                        </div>
+                        <div className="absolute bottom-10 left-10 bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+                            <span className="text-blue-600 font-bold">Active: 120+ Pros</span>
+                        </div>
                     </div>
 
                 </div>
             </section>
 
-            {/* Services Grid */}
-            <section className="py-20 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">Our Specialized Services</h2>
-                        <p className="text-slate-500 max-w-2xl mx-auto">Select a category and our system will match you with the highest-rated professional nearby.</p>
+            {/* Features Grid */}
+            <section className="py-20">
+                <div className="container-max">
+                    <div className="text-center mb-16 px-4">
+                        <h2 className="text-3xl font-bold mb-4">Why Choose SmartHelper?</h2>
+                        <p className="text-slate-500 max-w-2xl mx-auto">We use advanced logic to pair you with the perfect professional, considering location, expertise, and rating.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {['Cleaning', 'Plumbing', 'Electrical', 'HVAC', 'Gardening', 'Moving'].map(service => (
-                            <div key={service} className="p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-slate-100 group text-center">
-                                <div className="w-12 h-12 mx-auto bg-white rounded-xl shadow-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                    <span className="text-2xl text-blue-600">🛠️</span>
-                                </div>
-                                <span className="font-semibold text-slate-700 block">{service}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* How it Works */}
-            <section className="py-20 bg-slate-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-end mb-12">
-                        <div>
-                            <h2 className="text-3xl font-bold text-slate-900 mb-2">How Smart Assignment Works</h2>
-                            <p className="text-slate-500 max-w-xl">Our advanced dispatch technology eliminates the back-and-forth.</p>
-                        </div>
-                        <a href="#" className="text-blue-600 font-semibold hover:underline hidden sm:block">Learn about our AI →</a>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-                        {/* Connecting Line (Desktop) */}
-                        <div className="hidden md:block absolute top-8 left-[10%] right-[10%] h-0.5 bg-dashed border-t-2 border-slate-200 border-dashed -z-10"></div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
                         {[
-                            { step: '01', title: 'Request Service', desc: 'Simply select your service and location. No complex forms needed.' },
-                            { step: '02', title: 'Auto-Dispatch', desc: 'Our system scans for the closest, highest rated pro who specializes in your exact needs.' },
-                            { step: '03', title: 'Help Arrives', desc: 'Your helper arrives within 15-30 minutes. Pay securely app once finished.' }
-                        ].map((item) => (
-                            <div key={item.step} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative">
-                                <div className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg shadow-blue-500/30">
-                                    {item.step}
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">{item.title}</h3>
-                                <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+                            { icon: '🎯', title: 'Instant Matching', desc: 'Our algorithm finds the closest available pro.' },
+                            { icon: '🛡️', title: 'Verified Experts', desc: 'Every helper is vetted and background checked.' },
+                            { icon: '💳', title: 'Transparent Pricing', desc: 'Know the cost upfront. No hidden fees.' }
+                        ].map((feature, i) => (
+                            <div key={i} className="card p-8 bg-white hover:border-blue-200 transition-colors">
+                                <div className="text-4xl mb-6">{feature.icon}</div>
+                                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                                <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Footer / Stats */}
-            <div className="bg-blue-600 py-12 text-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                    <div>
-                        <div className="text-4xl font-bold font-heading mb-1">15m</div>
-                        <div className="text-blue-100 text-sm">Avg. Arrival Time</div>
-                    </div>
-                    <div>
-                        <div className="text-4xl font-bold font-heading mb-1">12k+</div>
-                        <div className="text-blue-100 text-sm">Verified Pros</div>
-                    </div>
-                    <div>
-                        <div className="text-4xl font-bold font-heading mb-1">4.9/5</div>
-                        <div className="text-blue-100 text-sm">Service Rating</div>
-                    </div>
-                    <div>
-                        <div className="text-4xl font-bold font-heading mb-1">24/7</div>
-                        <div className="text-blue-100 text-sm">Support Available</div>
+            {/* Services List */}
+            <section className="py-20 bg-white border-t border-slate-100">
+                <div className="container-max">
+                    <h2 className="text-3xl font-bold mb-12 px-4">Available Services</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 px-4">
+                        {['Cleaning', 'Plumbing', 'Electrical', 'Moving', 'Painting', 'Gardening'].map(s => (
+                            <div key={s} className="p-4 rounded-lg bg-slate-50 text-center font-medium hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors border border-transparent hover:border-blue-100">
+                                {s}
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="bg-slate-900 text-slate-400 py-12 mt-auto">
+                <div className="container-max text-center">
+                    <p>© 2026 SmartHelper Inc. All rights reserved.</p>
+                </div>
+            </footer>
+
         </div>
     );
 }

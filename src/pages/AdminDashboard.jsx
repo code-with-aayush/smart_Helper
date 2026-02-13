@@ -1,149 +1,172 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { seedHelpers, SERVICE_TYPES } from '../utils/seedData';
+import { seedHelpers } from '../utils/seedData';
 import LiveMap from '../components/LiveMap';
 import StatusBadge from '../components/StatusBadge';
-import { formatDistanceToNow } from 'date-fns';
 
 export default function AdminDashboard() {
+    const [activeTab, setActiveTab] = useState('bookings');
     const [stats, setStats] = useState({
         totalBookings: 0,
         activeBookings: 0,
         availableHelpers: 0,
-        avgMatchTime: '3.2s'
+        revenue: 0
     });
     const [helpers, setHelpers] = useState([]);
     const [bookings, setBookings] = useState([]);
-    const [recentMatches, setRecentMatches] = useState([]);
 
     useEffect(() => {
-        // Bookings Listener
+        // Bookings
         const unsubBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
             const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setBookings(docs);
-            const active = docs.filter(b => ['searching', 'assigned', 'in_progress'].includes(b.status));
-            setStats(prev => ({ ...prev, totalBookings: docs.length, activeBookings: active.length }));
 
-            // Fake "Matches" feed from recent bookings
-            const matches = docs
-                .filter(b => b.status === 'assigned' || b.status === 'completed')
-                .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds)
-                .slice(0, 5);
-            setRecentMatches(matches);
+            const active = docs.filter(b => ['searching', 'assigned', 'in_progress'].includes(b.status));
+            const completed = docs.filter(b => b.status === 'completed');
+
+            setStats(prev => ({
+                ...prev,
+                totalBookings: docs.length,
+                activeBookings: active.length,
+                revenue: completed.length * 15 // Assuming $15 cut
+            }));
         });
 
-        // Helpers Listener
+        // Helpers
         const unsubHelpers = onSnapshot(collection(db, 'helpers'), (snapshot) => {
             const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setHelpers(docs);
-            const available = docs.filter(h => h.status === 'available').length;
-            setStats(prev => ({ ...prev, availableHelpers: available }));
+            setStats(prev => ({
+                ...prev,
+                availableHelpers: docs.filter(h => h.status === 'available').length
+            }));
         });
 
         return () => { unsubBookings(); unsubHelpers(); };
     }, []);
 
     return (
-        <div className="relative h-[calc(100vh-64px)] w-full overflow-hidden bg-slate-50 font-sans">
+        <div className="pt-20 pb-10 min-h-screen bg-slate-50 px-4 sm:px-6 lg:px-8 font-sans">
+            <div className="max-w-7xl mx-auto space-y-8">
 
-            {/* Full Map Background */}
-            <div className="absolute inset-0 z-0">
-                <LiveMap bookings={bookings} role="admin" />
-            </div>
-
-            {/* Top Header / Status Bar */}
-            <div className="absolute top-0 left-0 right-0 z-10 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
-                <div className="flex items-center gap-4">
-                    <div className="bg-blue-600 p-2 rounded-lg text-white">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    </div>
+                {/* Header */}
+                <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-lg font-bold text-slate-900 leading-none">System Dispatch Monitor</h1>
-                        <p className="text-xs text-slate-500 font-mono tracking-wider">ENGINE v4.2.0 • LIVE STREAM</p>
+                        <h1 className="text-2xl font-bold text-slate-900">Admin Overview</h1>
+                        <p className="text-slate-500 text-sm">Monitor system performance and dispatching.</p>
                     </div>
-                </div>
-
-                <div className="flex gap-8">
-                    <div className="text-center">
-                        <div className="text-xs text-slate-500 uppercase font-bold">Avg. Match Time</div>
-                        <div className="text-xl font-bold text-blue-600">{stats.avgMatchTime}</div>
-                    </div>
-                    <div className="text-center border-l border-slate-200 pl-8">
-                        <div className="text-xs text-slate-500 uppercase font-bold">Active Requests</div>
-                        <div className="text-xl font-bold text-slate-900">{stats.activeBookings}</div>
-                    </div>
-                    <div className="text-center border-l border-slate-200 pl-8">
-                        <div className="text-xs text-slate-500 uppercase font-bold">Online Helpers</div>
-                        <div className="text-xl font-bold text-slate-900">{stats.availableHelpers}</div>
-                    </div>
-                    <button onClick={seedHelpers} className="btn btn-primary ml-4 px-4 py-2 text-sm shadow-lg shadow-blue-500/20">
-                        ⚡ Config
+                    <button onClick={seedHelpers} className="btn btn-primary text-sm shadow-md">
+                        ⚡ Reset / Seed Data
                     </button>
                 </div>
-            </div>
 
-            {/* Right Sidebar: Live Logs */}
-            <div className="absolute top-24 right-4 bottom-4 w-80 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 flex flex-col overflow-hidden z-10 animate-fade-in">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <h3 className="font-bold text-slate-800 text-sm">Live Assignment Log</h3>
-                    </div>
-                    <div className="flex gap-2 text-slate-400">
-                        <button className="hover:text-slate-600">⬇</button>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                    {recentMatches.length === 0 && (
-                        <p className="text-center text-slate-400 text-sm py-8">No recent matches</p>
-                    )}
-                    {recentMatches.map(match => (
-                        <div key={match.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs font-mono text-slate-400">{match.createdAt?.seconds ? new Date(match.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}</span>
-                                <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Matched</span>
-                            </div>
-                            <p className="text-sm text-slate-600 mb-1">
-                                <span className="font-bold text-slate-900">Helper {match.helperName?.split(' ')[0]}</span> matched to <span className="font-bold text-slate-900">{match.userName?.split(' ')[0]}</span>
-                            </p>
-                            <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-50">
-                                <div className="flex items-center gap-1 text-xs text-slate-500">
-                                    <span>📍 1.2km</span>
-                                </div>
-                                <div className="flex items-center gap-1 text-xs text-slate-500">
-                                    <span>🛠️ {match.serviceType}</span>
-                                </div>
-                            </div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[
+                        { label: 'Total Revenue', value: `$${stats.revenue}`, color: 'text-green-600' },
+                        { label: 'Total Bookings', value: stats.totalBookings, color: 'text-slate-900' },
+                        { label: 'Active Requests', value: stats.activeBookings, color: 'text-blue-600' },
+                        { label: 'Online Helpers', value: stats.availableHelpers, color: 'text-purple-600' }
+                    ].map((stat, i) => (
+                        <div key={i} className="card p-6 bg-white border border-slate-200">
+                            <div className="text-sm font-medium text-slate-500 mb-1">{stat.label}</div>
+                            <div className={`text-3xl font-bold ${stat.color}`}>{stat.value}</div>
                         </div>
                     ))}
+                </div>
 
-                    {/* Fake stream items for visuals if empty */}
-                    {recentMatches.length < 3 && (
-                        <div className="opacity-50 grayscale">
-                            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm mb-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-mono text-slate-400">14:20:55</span>
-                                    <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Scanning</span>
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    {/* Left Column: Tables */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Tabs */}
+                        <div className="flex gap-4 border-b border-slate-200">
+                            <button
+                                onClick={() => setActiveTab('bookings')}
+                                className={`pb-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'bookings' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                            >
+                                All Bookings
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('helpers')}
+                                className={`pb-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'helpers' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                            >
+                                Helper Fleet
+                            </button>
+                        </div>
+
+                        {activeTab === 'bookings' && (
+                            <div className="card bg-white overflow-hidden shadow-sm">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                                            <tr>
+                                                <th className="px-6 py-3">ID</th>
+                                                <th className="px-6 py-3">Service</th>
+                                                <th className="px-6 py-3">Customer</th>
+                                                <th className="px-6 py-3">Status</th>
+                                                <th className="px-6 py-3">Assigned To</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {bookings.map(book => (
+                                                <tr key={book.id} className="hover:bg-slate-50">
+                                                    <td className="px-6 py-4 font-mono text-xs text-slate-400">#{book.id.slice(0, 6)}</td>
+                                                    <td className="px-6 py-4 font-medium text-slate-900">{book.serviceType}</td>
+                                                    <td className="px-6 py-4">{book.userName}</td>
+                                                    <td className="px-6 py-4"><StatusBadge status={book.status} /></td>
+                                                    <td className="px-6 py-4 text-slate-500">{book.helperName || '—'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <p className="text-sm text-slate-500 italic">System re-routing... Match pending</p>
+                            </div>
+                        )}
+
+                        {activeTab === 'helpers' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {helpers.map(helper => (
+                                    <div key={helper.id} className="card p-4 bg-white flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-600">
+                                                {helper.name[0]}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-slate-900">{helper.name}</div>
+                                                <div className="text-xs text-slate-500 capitalize">{helper.skills?.join(', ')}</div>
+                                            </div>
+                                        </div>
+                                        <div className={`px-2 py-1 rounded-full text-xs font-bold ${helper.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            {helper.status}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Column: Live Overview Map */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-24">
+                            <div className="card bg-white p-4 border border-slate-200 shadow-sm mb-4">
+                                <h3 className="font-bold text-slate-900 mb-2">Live Fleet Map</h3>
+                                <div className="h-[400px] rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                                    <LiveMap bookings={bookings} role="admin" />
+                                </div>
+                            </div>
+
+                            <div className="card bg-slate-900 p-6 text-white text-center">
+                                <h3 className="font-bold text-lg mb-1">System Healthy</h3>
+                                <p className="text-slate-400 text-sm">All services operational</p>
                             </div>
                         </div>
-                    )}
-                </div>
+                    </div>
 
-                <div className="p-3 bg-slate-50 border-t border-slate-100">
-                    <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-500">SYSTEM EFFICIENCY</span>
-                        <span className="font-bold text-green-600">98.4%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-200 rounded-full mt-2 overflow-hidden">
-                        <div className="h-full bg-green-500 w-[98.4%] rounded-full"></div>
-                    </div>
                 </div>
             </div>
-
         </div>
     );
 }
