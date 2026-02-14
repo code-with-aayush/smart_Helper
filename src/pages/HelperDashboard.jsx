@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, updateDoc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import LiveMap from '../components/LiveMap';
 import StatusBadge from '../components/StatusBadge';
-import { formatDistanceToNow } from 'date-fns';
+import { listenToOpenBookings, assignBookingToSelf, declineBooking, completeBooking } from '../services/bookingService';
 
 export default function HelperDashboard() {
     const { currentUser, userProfile } = useAuth();
@@ -14,6 +14,10 @@ export default function HelperDashboard() {
     const [activeJobs, setActiveJobs] = useState([]);
     const [completedJobs, setCompletedJobs] = useState([]);
     const [stats, setStats] = useState({ earnings: 0, jobs: 0, rating: 4.8 });
+
+    // Use a ref for location so we can access the latest value inside the Firestore callback
+    // without triggering re-subscriptions or stale closures.
+    const helperLocationRef = useRef({ lat: 40.7128, lng: -74.0060 }); // Default NYC
 
     // Sync Availability
     useEffect(() => {
@@ -29,52 +33,109 @@ export default function HelperDashboard() {
         } catch (err) { console.error(err); }
     };
 
-    // Listen for Incoming Requests
+    // Get Location (Once on mount + periodically?)
+    useEffect(() => {
+        if (navigator.geolocation) {
+            const updateLoc = () => {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        helperLocationRef.current = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        console.log("Helper location updated:", helperLocationRef.current);
+                    },
+                    (err) => console.error("Location error:", err),
+                    { enableHighAccuracy: true }
+                );
+            };
+            updateLoc();
+            // Optional: Watch position? For now, just getting it once is fine for the hackathon
+        }
+    }, []);
+
+    // Listen for Active Jobs (My Jobs)
     useEffect(() => {
         if (!currentUser) return;
+
         const q = query(
             collection(db, 'bookings'),
-            where('helperId', '==', currentUser.uid),
-            where('status', '==', 'pending_acceptance')
+            where('assignedHelper', '==', currentUser.uid)
         );
-        return onSnapshot(q, (snapshot) => {
-            setIncomingBooking(snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const myBookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            const active = myBookings.filter(b => ['assigned', 'in_progress'].includes(b.status));
+            setActiveJobs(active);
+            const history = myBookings.filter(b => ['completed', 'cancelled'].includes(b.status));
+            setCompletedJobs(history);
+            const completedCount = history.filter(b => b.status === 'completed').length;
+            setStats(s => ({ ...s, jobs: completedCount, earnings: completedCount * 45 }));
         });
+
+        return () => unsubscribe();
     }, [currentUser]);
 
-    // Listen for Active Jobs
-    useEffect(() => {
-        if (!currentUser) return;
-        const q = query(
-            collection(db, 'bookings'),
-            where('helperId', '==', currentUser.uid),
-            where('status', 'in', ['assigned', 'in_progress'])
-        );
-        return onSnapshot(q, (snapshot) => {
-            setActiveJobs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        });
-    }, [currentUser]);
 
-    // Listen for Completed Jobs (for stats)
+    // Listen for Open Requests
     useEffect(() => {
-        if (!currentUser) return;
-        const q = query(
-            collection(db, 'bookings'),
-            where('helperId', '==', currentUser.uid),
-            where('status', '==', 'completed')
-        );
-        return onSnapshot(q, (snapshot) => {
-            const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setCompletedJobs(jobs);
-            // Simple stat calculation
-            setStats(prev => ({ ...prev, jobs: jobs.length, earnings: jobs.length * 45 }));
+        // Always listen if user is logged in and "Available"
+        if (!currentUser || !isAvailable) {
+            setIncomingBooking(null);
+            return;
+        }
+
+        console.log("Starting listener for open bookings...");
+
+        const unsubscribe = listenToOpenBookings((bookings) => {
+            console.log("Open bookings received:", bookings);
+
+            // 1. Filter out rejected bookings
+            const candidates = bookings.filter(b =>
+                !b.rejectedHelpers?.includes(currentUser.uid)
+            );
+
+            if (candidates.length > 0) {
+                // Take the most recent one (or first one)
+                const relevantBooking = candidates[0];
+                setIncomingBooking(relevantBooking);
+            } else {
+                setIncomingBooking(null);
+            }
         });
-    }, [currentUser]);
+
+        return () => unsubscribe();
+    }, [currentUser, isAvailable]);
 
     const handleBookingAction = async (id, action) => {
-        if (action === 'accept') await updateDoc(doc(db, 'bookings', id), { status: 'assigned' });
-        if (action === 'reject') await updateDoc(doc(db, 'bookings', id), { status: 'searching', helperId: null });
-        if (action === 'complete') await updateDoc(doc(db, 'bookings', id), { status: 'completed', completedAt: new Date() });
+        if (!incomingBooking && action !== 'complete') return; // incomingBooking might be null for 'complete' action if it's from active list
+
+        // Use the ref for immediate location access
+        const loc = helperLocationRef.current;
+        const helperLocation = {
+            latitude: loc.lat,
+            longitude: loc.lng,
+            address: 'Live Location'
+        };
+
+        try {
+            if (action === 'accept') {
+                await assignBookingToSelf(id, currentUser.uid, userProfile.name, helperLocation);
+                setIncomingBooking(null);
+                setActiveTab('active'); // Go to Active Jobs
+            }
+            if (action === 'reject') {
+                await declineBooking(id, currentUser.uid);
+                setIncomingBooking(null);
+            }
+            if (action === 'complete') {
+                await completeBooking(id, currentUser.uid);
+                setActiveTab('history'); // Go to History
+            }
+        } catch (error) {
+            console.error("Action failed:", error);
+            alert("Action failed. Please try again.");
+        }
     };
 
     return (
@@ -107,7 +168,7 @@ export default function HelperDashboard() {
 
                     {/* Navigation Menu */}
                     <div className="card bg-white overflow-hidden">
-                        {['overview', 'active', 'history', 'earnings'].map(tab => (
+                        {['overview', 'active', 'history'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -126,15 +187,31 @@ export default function HelperDashboard() {
                     {/* Incoming Request Banner */}
                     {incomingBooking && (
                         <div className="card p-6 bg-blue-600 text-white animate-in shadow-xl shadow-blue-500/20 border-none relative overflow-hidden">
-                            <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl backdrop-blur-sm">🔔</div>
+                            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl backdrop-blur-sm shrink-0">🔔</div>
                                     <div>
-                                        <h3 className="text-xl font-bold">New Job Request</h3>
-                                        <p className="text-blue-100">{incomingBooking.serviceType} • 5km away</p>
+                                        <h3 className="text-xl font-bold mb-1">New Job Request</h3>
+                                        <div className="flex justify-between items-center w-full">
+                                            <div className="text-blue-100 font-medium mb-1 text-lg">{incomingBooking.serviceType}</div>
+                                            {incomingBooking.price && (
+                                                <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+                                                    ${incomingBooking.price}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="text-blue-200 text-sm mb-2">
+                                            <span className="font-bold">{incomingBooking.userName}</span> • 4.9 ★
+                                        </div>
+                                        <div className="bg-white/10 p-3 rounded-lg text-sm text-blue-50 mb-1">
+                                            <p className="line-clamp-2">"{incomingBooking.description || 'No description provided.'}"</p>
+                                        </div>
+                                        <div className="text-xs text-blue-200 flex items-center gap-1 mt-2">
+                                            <span>📍</span> {incomingBooking.address || 'Location provided on map'}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 w-full md:w-auto">
+                                <div className="flex gap-3 w-full md:w-auto mt-auto">
                                     <button
                                         onClick={() => handleBookingAction(incomingBooking.id, 'reject')}
                                         className="flex-1 md:flex-none px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 font-semibold transition-colors"
@@ -155,21 +232,7 @@ export default function HelperDashboard() {
                     {/* Dashboard Content */}
                     {activeTab === 'overview' && (
                         <>
-                            {/* Stats Row */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="card p-6 bg-white">
-                                    <div className="text-slate-500 text-sm font-medium mb-1">Today's Earnings</div>
-                                    <div className="text-3xl font-bold text-slate-900">${stats.earnings}</div>
-                                </div>
-                                <div className="card p-6 bg-white">
-                                    <div className="text-slate-500 text-sm font-medium mb-1">Jobs Completed</div>
-                                    <div className="text-3xl font-bold text-slate-900">{stats.jobs}</div>
-                                </div>
-                                <div className="card p-6 bg-white">
-                                    <div className="text-slate-500 text-sm font-medium mb-1">Acceptance Rate</div>
-                                    <div className="text-3xl font-bold text-slate-900">92%</div>
-                                </div>
-                            </div>
+                            {/* Stats Row REMOVED for clean look */}
 
                             {/* Active Jobs Section */}
                             <div>
@@ -181,16 +244,35 @@ export default function HelperDashboard() {
                                                 <div className="flex justify-between items-start mb-4">
                                                     <div>
                                                         <h4 className="font-bold text-slate-900 text-lg">{job.serviceType}</h4>
-                                                        <p className="text-slate-500 text-sm">Customer: {job.userName}</p>
+                                                        <p className="text-slate-500 text-sm font-medium">{job.userName}</p>
+                                                        <p className="text-slate-400 text-xs mt-1">{job.address}</p>
                                                     </div>
                                                     <StatusBadge status={job.status} />
                                                 </div>
-                                                <div className="h-48 bg-slate-100 rounded-lg mb-4 overflow-hidden border border-slate-200">
+
+                                                <div className="bg-slate-50 p-4 rounded-lg mb-4 text-sm text-slate-600 italic border border-slate-100">
+                                                    "{job.description || 'No additional details provided.'}"
+                                                </div>
+
+                                                <div className="h-48 bg-slate-100 rounded-lg mb-4 overflow-hidden border border-slate-200 relative">
                                                     <LiveMap bookings={[job]} role="helper" />
                                                 </div>
+
                                                 <div className="flex gap-3">
-                                                    <button className="flex-1 btn btn-outline border-slate-200 hover:bg-slate-50">Navigate</button>
-                                                    <button className="flex-1 btn btn-outline border-slate-200 hover:bg-slate-50">Call User</button>
+                                                    <a
+                                                        href={`https://www.google.com/maps/dir/?api=1&destination=${job.userLocation.latitude},${job.userLocation.longitude}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex-1 btn btn-outline border-slate-200 hover:bg-slate-50 text-center flex items-center justify-center gap-2"
+                                                    >
+                                                        <span>🧭</span> Navigate
+                                                    </a>
+                                                    <a
+                                                        href="tel:1234567890"
+                                                        className="flex-1 btn btn-outline border-slate-200 hover:bg-slate-50 text-center flex items-center justify-center gap-2"
+                                                    >
+                                                        <span>📞</span> Call User
+                                                    </a>
                                                     <button
                                                         onClick={() => handleBookingAction(job.id, 'complete')}
                                                         className="flex-1 btn bg-green-600 hover:bg-green-700 text-white border-green-600"

@@ -6,7 +6,6 @@ import {
     onSnapshot,
     query,
     where,
-    orderBy,
     serverTimestamp,
     getDoc
 } from 'firebase/firestore';
@@ -15,7 +14,7 @@ import { db } from '../firebase';
 /**
  * Create a new booking in Firestore
  */
-export async function createBooking(userId, userName, serviceType, userLocation) {
+export async function createBooking(userId, userName, serviceType, userLocation, additionalData = {}) {
     const bookingRef = await addDoc(collection(db, 'bookings'), {
         userId,
         userName,
@@ -24,6 +23,7 @@ export async function createBooking(userId, userName, serviceType, userLocation)
             latitude: userLocation.latitude,
             longitude: userLocation.longitude
         },
+        ...additionalData, // Spread additional fields like description, address
         assignedHelper: null,
         helperName: null,
         helperLocation: null,
@@ -65,8 +65,7 @@ export function listenToBooking(bookingId, callback) {
 export function listenToUserBookings(userId, callback) {
     const q = query(
         collection(db, 'bookings'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', userId)
     );
     return onSnapshot(q, (snapshot) => {
         const bookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -93,8 +92,7 @@ export function listenToHelperBookings(helperId, callback) {
  */
 export function listenToAllBookings(callback) {
     const q = query(
-        collection(db, 'bookings'),
-        orderBy('createdAt', 'desc')
+        collection(db, 'bookings')
     );
     return onSnapshot(q, (snapshot) => {
         const bookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -103,12 +101,27 @@ export function listenToAllBookings(callback) {
 }
 
 /**
- * Helper accepts a booking
+ * Listen to all open bookings (status == 'searching')
  */
-export async function acceptBooking(bookingId, helperId, helperName, helperLocation) {
+export function listenToOpenBookings(callback) {
+    const q = query(
+        collection(db, 'bookings'),
+        where('status', '==', 'searching')
+    );
+    return onSnapshot(q, (snapshot) => {
+        const bookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(bookings);
+    });
+}
+
+/**
+ * Helper assigns a booking to themselves
+ */
+export async function assignBookingToSelf(bookingId, helperId, helperName, helperLocation) {
     const bookingRef = doc(db, 'bookings', bookingId);
     const helperRef = doc(db, 'helpers', helperId);
 
+    // In a real app, use a transaction to prevent race conditions
     await updateDoc(bookingRef, {
         status: 'assigned',
         assignedHelper: helperId,
@@ -123,9 +136,9 @@ export async function acceptBooking(bookingId, helperId, helperName, helperLocat
 }
 
 /**
- * Helper rejects a booking - adds helper to rejected list and triggers reassignment
+ * Helper declines a potential booking (locally hides it or marks as rejected)
  */
-export async function rejectBooking(bookingId, helperId) {
+export async function declineBooking(bookingId, helperId) {
     const bookingRef = doc(db, 'bookings', bookingId);
     const snapshot = await getDoc(bookingRef);
 
@@ -134,12 +147,7 @@ export async function rejectBooking(bookingId, helperId) {
         const rejected = data.rejectedHelpers || [];
 
         await updateDoc(bookingRef, {
-            assignedHelper: null,
-            helperName: null,
-            helperLocation: null,
-            status: 'searching',
-            rejectedHelpers: [...rejected, helperId],
-            updatedAt: serverTimestamp()
+            rejectedHelpers: [...rejected, helperId]
         });
     }
 }
