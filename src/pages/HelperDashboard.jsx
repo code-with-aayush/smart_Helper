@@ -122,7 +122,7 @@ export default function HelperDashboard() {
             if (action === 'accept') {
                 await assignBookingToSelf(id, currentUser.uid, userProfile.name, helperLocation);
                 setIncomingBooking(null);
-                setActiveTab('active'); // Go to Active Jobs
+                setActiveTab('overview'); // Go to Overview (where active jobs are shown)
             }
             if (action === 'reject') {
                 await declineBooking(id, currentUser.uid);
@@ -146,8 +146,8 @@ export default function HelperDashboard() {
                 <div className="lg:col-span-1 space-y-6">
                     {/* Profile Card */}
                     <div className="card p-6 bg-white text-center">
-                        <div className="w-20 h-20 mx-auto bg-slate-200 rounded-full overflow-hidden mb-4 border-4 border-slate-50 shadow-sm">
-                            <img src={`https://ui-avatars.com/api/?name=${userProfile?.name}&background=0F172A&color=fff`} alt="Profile" />
+                        <div className="w-20 h-20 mx-auto bg-blue-600 rounded-full flex items-center justify-center mb-4 border-4 border-slate-50 shadow-sm text-4xl text-white">
+                            ⚡
                         </div>
                         <h2 className="font-bold text-lg text-slate-900">{userProfile?.name}</h2>
                         <div className="flex justify-center items-center gap-2 mt-1 mb-4">
@@ -168,7 +168,7 @@ export default function HelperDashboard() {
 
                     {/* Navigation Menu */}
                     <div className="card bg-white overflow-hidden">
-                        {['overview', 'active', 'history'].map(tab => (
+                        {['overview', 'history'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -258,7 +258,7 @@ export default function HelperDashboard() {
                                                     <LiveMap bookings={[job]} role="helper" />
                                                 </div>
 
-                                                <div className="flex gap-3">
+                                                <div className="flex flex-col sm:flex-row gap-3">
                                                     <a
                                                         href={`https://www.google.com/maps/dir/?api=1&destination=${job.userLocation.latitude},${job.userLocation.longitude}`}
                                                         target="_blank"
