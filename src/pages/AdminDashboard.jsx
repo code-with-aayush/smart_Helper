@@ -64,7 +64,7 @@ export default function AdminDashboard() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Revenue', value: `$${stats.revenue}`, color: 'text-green-600' },
+                        { label: 'Total Revenue', value: `₹${stats.revenue}`, color: 'text-green-600' },
                         { label: 'Total Bookings', value: stats.totalBookings, color: 'text-slate-900' },
                         { label: 'Active Requests', value: stats.activeBookings, color: 'text-blue-600' },
                         { label: 'Online Helpers', value: stats.availableHelpers, color: 'text-purple-600' }

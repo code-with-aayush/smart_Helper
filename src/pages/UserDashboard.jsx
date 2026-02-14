@@ -166,7 +166,7 @@ export default function UserDashboard() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-xs font-bold text-slate-500 uppercase">Offer Price ($)</label>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase">Offer Price (₹)</label>
                                                     <input
                                                         type="number"
                                                         className="input-base mt-1"
@@ -252,7 +252,7 @@ export default function UserDashboard() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-bold text-slate-900">$45.00</div>
+                                            <div className="font-bold text-slate-900">₹45.00</div>
                                             <StatusBadge status={b.status} />
                                         </div>
                                     </div>

@@ -196,7 +196,7 @@ export default function HelperDashboard() {
                                             <div className="text-blue-100 font-medium mb-1 text-lg">{incomingBooking.serviceType}</div>
                                             {incomingBooking.price && (
                                                 <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm">
-                                                    ${incomingBooking.price}
+                                                    ₹{incomingBooking.price}
                                                 </div>
                                             )}
                                         </div>

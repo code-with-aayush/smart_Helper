@@ -77,10 +77,10 @@ export default function LandingPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
-                            { title: 'Home Cleaning', icon: '🧹', color: 'bg-blue-100 text-blue-600', price: 'from $25/hr', desc: 'Spotless cleaning for every room.' },
-                            { title: 'Plumbing Repair', icon: '🔧', color: 'bg-cyan-100 text-cyan-600', price: 'from $40/hr', desc: 'Fix leaks and pipes instantly.' },
-                            { title: 'Electrical Help', icon: '⚡', color: 'bg-yellow-100 text-yellow-600', price: 'from $35/hr', desc: 'Expert wiring and repairs.' },
-                            { title: 'Moving & Packing', icon: '📦', color: 'bg-orange-100 text-orange-600', price: 'from $50/hr', desc: 'Safe relocation services.' }
+                            { title: 'Home Cleaning', icon: '🧹', color: 'bg-blue-100 text-blue-600', price: 'from ₹25/hr', desc: 'Spotless cleaning for every room.' },
+                            { title: 'Plumbing Repair', icon: '🔧', color: 'bg-cyan-100 text-cyan-600', price: 'from ₹40/hr', desc: 'Fix leaks and pipes instantly.' },
+                            { title: 'Electrical Help', icon: '⚡', color: 'bg-yellow-100 text-yellow-600', price: 'from ₹35/hr', desc: 'Expert wiring and repairs.' },
+                            { title: 'Moving & Packing', icon: '📦', color: 'bg-orange-100 text-orange-600', price: 'from ₹50/hr', desc: 'Safe relocation services.' }
                         ].map((service, i) => (
                             <div key={i} className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col items-center text-center">
                                 <div className={`w-20 h-20 rounded-full ${service.color} flex items-center justify-center text-4xl mb-6 shadow-sm group-hover:scale-110 transition-transform`}>
